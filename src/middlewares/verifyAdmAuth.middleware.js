@@ -1,5 +1,6 @@
 import users from "../database";
 import jwt from "jsonwebtoken";
+import findUserByTokenUtil from "../utilities/findUserByToken.util";
 
 const verifyAdmAuthMiddleware = (req, res, next) => {
   try {
@@ -8,20 +9,10 @@ const verifyAdmAuthMiddleware = (req, res, next) => {
       throw new Error("Token de autenticação ausente");
     }
 
-    const token = authorization.split(" ")[1];
-
-    jwt.verify(token, "SECRET_KEY", (error, decoded) => {
-      if (error) {
-        throw new Error("Token inválido");
-      }
-      const user = users.find((user) => user.email === decoded.email);
-      if (!user) {
-        throw new Error("Token inválido");
-      }
-      if (user.isAdm === false) {
-        throw new Error("Usuário sem permissão de acesso");
-      }
-    });
+    const user = findUserByTokenUtil(authorization);
+    if (!user.isAdm) {
+      throw new Error("Usuário sem permissão de acesso");
+    }
 
     next();
   } catch (error) {
